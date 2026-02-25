@@ -1,53 +1,56 @@
 console.log("SCRIPT CARREGADO OK");
 
-// ============================================
-// CONFIGURAÇÃO DO BACKEND
-// ============================================
-const API_URL = "https://api.chatbrasil.com";
+const API_URL = "https://chatbrasil.onrender.com";
 
-// ============================================
-// SOCKET.IO PARA CHAT EM TEMPO REAL
-// ============================================
+// 1. Configuração do Socket (Melhorada para o Render)
+const socket = io(API_URL, {
+    transports: ["websocket", "polling"]
+});
 
-// Adiciona Socket.IO client
-const socket = io(API_URL); // conecta ao backend Socket.IO
-
-// Elementos do chat
 const chatContainer = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 const chatSendBtn = document.getElementById("chatSendBtn");
 
-// Receber mensagens
-socket.on("receive_message", (msg) => {
+// 2. Receber mensagens (Tratando como OBJETO)
+socket.on("receive_message", (data) => {
     if (!chatContainer) return;
     const div = document.createElement("div");
-    div.textContent = msg;
     div.classList.add("chat-message");
+    
+    // Se o backend enviar objeto, mostra "Nome: Mensagem"
+    if (typeof data === 'object') {
+        div.innerHTML = `<strong>${data.username}:</strong> ${data.text}`;
+    } else {
+        div.textContent = data;
+    }
+    
     chatContainer.appendChild(div);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 });
 
-// Enviar mensagem
+// 3. Enviar mensagem (CORRIGIDO para enviar OBJETO)
 if (chatSendBtn && chatInput) {
     chatSendBtn.addEventListener("click", () => {
         const message = chatInput.value.trim();
-        if (message !== "") {
-            socket.emit("send_message", message);
+        const username = localStorage.getItem("username"); // Pega o nome salvo
+
+        if (message !== "" && username) {
+            socket.emit("send_message", {
+                username: username,
+                text: message
+            });
             chatInput.value = "";
+        } else if (!username) {
+            alert("Faça login para poder falar no chat!");
         }
     });
 
     chatInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-            chatSendBtn.click();
-        }
+        if (e.key === "Enter") chatSendBtn.click();
     });
 }
 
-// ============================================
-// FUNÇÕES DE LOGIN E REGISTRO
-// ============================================
-
+// 4. Registro
 async function registerUser(username, email, password) {
     try {
         const res = await fetch(`${API_URL}/register`, {
@@ -55,20 +58,13 @@ async function registerUser(username, email, password) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email, password })
         });
-
         const data = await res.json();
-
-        if (res.ok) {
-            console.log("Usuário registrado com sucesso:", data.user.username);
-        } else {
-            console.log("Erro no registro:", data.error);
-        }
-
-    } catch (err) {
-        console.error("Erro ao conectar com backend:", err);
-    }
+        if (res.ok) alert("Usuário registrado!");
+        else alert("Erro: " + data.error);
+    } catch (err) { console.error(err); }
 }
 
+// 5. Login (SALVANDO USERNAME)
 async function loginUser(email, password) {
     try {
         const res = await fetch(`${API_URL}/login`, {
@@ -76,85 +72,38 @@ async function loginUser(email, password) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
         });
-
         const data = await res.json();
-
         if (res.ok) {
-            console.log("Login realizado com sucesso:", data.username);
             localStorage.setItem("token", data.token);
+            localStorage.setItem("username", data.username); // ESSENCIAL
+            alert("Login OK!");
+            location.reload(); // Reinicia para carregar o nome no chat
         } else {
-            console.log("Erro no login:", data.error);
+            alert("Erro: " + data.error);
         }
-
-    } catch (err) {
-        console.error("Erro ao conectar com backend:", err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-// ============================================
-// EVENTOS DOS FORMULÁRIOS
-// ============================================
-
+// 6. Eventos
 document.addEventListener("DOMContentLoaded", () => {
-
-    // REGISTRO
     const registerForm = document.getElementById("registerForm");
-
     if (registerForm) {
         registerForm.addEventListener("submit", (e) => {
             e.preventDefault();
-
             const username = document.getElementById("registerUsername").value.trim();
             const email = document.getElementById("registerEmail").value.trim();
             const password = document.getElementById("registerPassword").value.trim();
-
-            // REGRA: Cada palavra deve começar com letra maiúscula
-            const namePattern = /^([A-Z][a-z]+)(\s[A-Z][a-z]+)*$/;
-
-            if (!namePattern.test(username)) {
-                console.log("Nome inválido: deve começar com letra maiúscula em cada palavra.");
-                return;
-            }
-
             registerUser(username, email, password);
         });
     }
 
-    // LOGIN
     const loginForm = document.getElementById("loginForm");
-
     if (loginForm) {
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
-
             const email = document.getElementById("loginUsername").value.trim();
             const password = document.getElementById("loginPassword").value.trim();
-
             loginUser(email, password);
         });
-    }
-
-    // Inicialização geral
-    if (typeof init === "function") init();
-    if (typeof setupFileMenuListener === "function") setupFileMenuListener();
-});
-
-// ============================================
-// FUNÇÕES AUXILIARES
-// ============================================
-
-document.addEventListener("click", (e) => {
-    if (
-        !e.target.closest(".control-btn") &&
-        !e.target.closest("#emojiPickerPopup") &&
-        !e.target.closest("#filesMenuPopup")
-    ) {
-        if (typeof closeMenus === "function") closeMenus();
-    }
-});
-
-window.addEventListener("beforeunload", () => {
-    if (typeof config !== "undefined" && config.currentUser) {
-        if (typeof saveUserData === "function") saveUserData();
     }
 });
