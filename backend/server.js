@@ -44,8 +44,46 @@ app.post("/login", async (req, res) => {
   } else { res.status(400).json({ error: "Dados inválidos." }); }
 });
 
+// ============================================
+// LÓGICA DE CHAT PRIVADO (ESTILO WHATSAPP)
+// ============================================
 io.on("connection", (socket) => {
-  socket.on("send_message", (data) => io.emit("receive_message", data));
+  console.log(`📡 Usuário conectado: ${socket.id}`);
+
+  // O usuário entra em uma "sala" com o próprio ID dele (UUID do banco)
+  // Assim, quando alguém quiser falar com ele, o servidor sabe onde entregar
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`👤 Usuário ${userId} entrou na sua sala privada.`);
+  });
+
+  socket.on("send_message", async (data) => {
+    const { sender_id, receiver_id, content } = data;
+
+    try {
+      // 1. Grava a mensagem no Banco de Dados (Supabase)
+      await pool.query(
+        "INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3)",
+        [sender_id, receiver_id, content]
+      );
+
+      // 2. Envia a mensagem APENAS para o Destinatário e para o Remetente
+      // (Diferente do io.emit que mandava para o site inteiro)
+      io.to(receiver_id).to(sender_id).emit("receive_message", {
+        sender_id,
+        content,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error("❌ Erro ao salvar mensagem:", err.message);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Usuário desconectou.");
+  });
 });
 
-server.listen(3000, () => console.log("🚀 Servidor na porta 3000"));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));

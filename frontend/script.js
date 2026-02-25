@@ -28,20 +28,28 @@ socket.on("receive_message", (data) => {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 });
 
-// 3. Enviar mensagem (CORRIGIDO para enviar OBJETO)
+// VARIÁVEL GLOBAL PARA SABER COM QUEM ESTOU FALANDO (Igual clicar no contato no Zap)
+let contatoSelecionadoId = null; 
+
+// 3. Enviar mensagem PRIVADA (Estilo WhatsApp)
 if (chatSendBtn && chatInput) {
     chatSendBtn.addEventListener("click", () => {
         const message = chatInput.value.trim();
-        const username = localStorage.getItem("username"); // Pega o nome salvo
+        const meuId = localStorage.getItem("userId"); // Certifique-se de salvar o userId no Login!
 
-        if (message !== "" && username) {
+        if (message !== "" && meuId && contatoSelecionadoId) {
+            // ENVIA PARA O SOCKET COM A ESTRUTURA DA SUA TABELA 'messages'
             socket.emit("send_message", {
-                username: username,
-                text: message
+                sender_id: meuId,
+                receiver_id: contatoSelecionadoId,
+                content: message
             });
+            
             chatInput.value = "";
-        } else if (!username) {
-            alert("Faça login para poder falar no chat!");
+        } else if (!contatoSelecionadoId) {
+            alert("Selecione um contato primeiro para conversar!");
+        } else if (!meuId) {
+            alert("Erro: Você não está logado!");
         }
     });
 
@@ -49,6 +57,7 @@ if (chatSendBtn && chatInput) {
         if (e.key === "Enter") chatSendBtn.click();
     });
 }
+
 
 // 4. Registro
 async function registerUser(username, email, password) {
