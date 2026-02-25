@@ -1,6 +1,4 @@
 require("dotenv").config();
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
@@ -11,93 +9,43 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: { origin: "*" },
-});
+const io = new Server(server, { cors: { origin: "*" }, transports: ["websocket", "polling"] });
 
 app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString: "postgresql://postgres.fcxijdkfpestqodgripr:ChatBrasil2026@://aws-1-sa-east-1.pooler.supabase.com",
+  ssl: { rejectUnauthorized: false }
 });
+
 
 pool.connect()
   .then(() => console.log("✅ Conectado ao PostgreSQL"))
-  .catch((err) => console.error("❌ Erro ao conectar:", err));
+  .catch((err) => console.error("❌ Erro ao conectar ao banco:", err.message));
 
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando 🚀");
-});
+app.get("/", (req, res) => res.send("Servidor Chat Online 🚀"));
 
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-  }
-
   try {
     const hashed = await bcrypt.hash(password, 10);
-
-    const result = await pool.query(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, created_at",
-      [username, email, hashed]
-    );
-
-    res.json({ message: "Usuário registrado com sucesso", user: result.rows[0] });
-  } catch (err) {
-    if (err.code === "23505") {
-      res.status(400).json({ error: "Email ou username já existe" });
-    } else {
-      res.status(500).json({ error: err.message });
-    }
-  }
+    await pool.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [username, email, hashed]);
+    res.status(201).json({ message: "Usuário registrado!" });
+  } catch (err) { res.status(400).json({ error: "Erro ao registrar." }); }
 });
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-  }
-
-  try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-
-    if (result.rows.length === 0)
-      return res.status(400).json({ error: "Usuário não encontrado" });
-
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match)
-      return res.status(400).json({ error: "Senha incorreta" });
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    res.json({ message: "Login realizado com sucesso", token, username: user.username });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  if (result.rows.length > 0 && await bcrypt.compare(password, result.rows[0].password)) {
+    const token = jwt.sign({ id: result.rows[0].id }, "secret", { expiresIn: "7d" });
+    res.json({ token, username: result.rows[0].username });
+  } else { res.status(400).json({ error: "Dados inválidos." }); }
 });
 
 io.on("connection", (socket) => {
-  console.log("Usuário conectado:", socket.id);
-
-  socket.on("send_message", (msg) => {
-    io.emit("receive_message", msg);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Usuário desconectado:", socket.id);
-  });
+  socket.on("send_message", (data) => io.emit("receive_message", data));
 });
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+server.listen(3000, () => console.log("🚀 Servidor na porta 3000"));
