@@ -2,7 +2,7 @@ require("dotenv").config();
 const path = require("path");
 
 // Força o dotenv a procurar o arquivo no caminho absoluto
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+require("dotenv").config();
 
 console.log("DATABASE_URL carregada:", process.env.DATABASE_URL ? "SIM ✅" : "NÃO ❌");
 
@@ -29,9 +29,9 @@ app.use(express.json());
 // ------------------------------
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Se o erro de SSL persistir na Render, descomente a linha abaixo:
-  // ssl: { rejectUnauthorized: false } 
+  ssl: { rejectUnauthorized: false } // Quase sempre necessário em produção (Render/Heroku)
 });
+
 
 pool.connect()
   .then(() => console.log("✅ Conectado ao PostgreSQL/Supabase"))
@@ -85,15 +85,17 @@ app.post("/login", async (req, res) => {
 });
 
 // --- ROTA DE USUÁRIOS CORRIGIDA ---
-app.get('/users', async (req, res) => {
-    try {
-        // Usei "users" para combinar com o restante do seu código
-        const result = await pool.query('SELECT id, username FROM users ORDER BY username ASC'); 
-        res.json(result.rows);
-    } catch (err) {
-        console.error("❌ Erro ao buscar usuários:", err);
-        res.status(500).json({ error: "Erro ao buscar usuários" });
-    }
+app.get("/messages/:user1/:user2", async (req, res) => {
+  const { user1, user2 } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT * FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) ORDER BY created_at ASC",
+      [user1, user2]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar histórico" });
+  }
 });
 
 // ------------------------------
