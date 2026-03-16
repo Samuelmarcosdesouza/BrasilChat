@@ -1,1 +1,0 @@
-"export default function Home() { return ( <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', textAlign: 'center', fontFamily: 'sans-serif' }}> <h1>Chat Brasil est  Online! ??</h1> <p>O erro do Deno foi ignorado e o site subiu.</p> </main> ); }" 
