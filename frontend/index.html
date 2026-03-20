@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat Brasil - Comunicação Profissional</title>
 <link rel="icon" type="image/png" href="favicon.png?v=4">
-
-
   <style>
-    
+
         /* ============================================
            RESET E VARIÁVEIS GLOBAIS
            ============================================ */
@@ -979,6 +977,19 @@
         padding: 32px 20px;
     }
 }
+<!-- 2. AQUI VOCÊ COLOCA A FERRAMENTA DO SUPABASE (LINK COMPLETO) -->
+<script src="https://cdn.jsdelivr.net"></script>
+
+<!-- 3. AQUI COMEÇA O SEU JAVASCRIPT DE CONEXÃO E LÓGICA -->
+<script>
+    const _supabaseUrl = 'https://fcxijdkfpestqodgripr.supabase.co';
+    const _supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeGlqZGtmcGVzdHFvZGdyaXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTA0MTgsImV4cCI6MjA4NzI2NjQxOH0.4Z-6kA4NZey1XekCQ4YWq-s1v6JOlHCuQokihz8zVi8';
+    
+    // Agora o comando abaixo vai funcionar porque o link de cima está completo!
+    const supabase = supabase.createClient(_supabaseUrl, _supabaseKey);
+
+    console.log("Sistema de Chat Iniciado e Conectado!");
+</script>
 
     </style>
   <script src="/_sdk/element_sdk.js"></script>
