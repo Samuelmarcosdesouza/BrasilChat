@@ -1865,7 +1865,7 @@
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: true })
                     .then(stream => {
-                        config.permissionsGranted.camera = true; document.getElementById("permissionPrompt").style.display = "block"; document.getElementById("permissionPrompt").style.display = "block";
+                        config.permissionsGranted.camera = true; document.getElementById("permissionPrompt").style.display = "block"; 
                         stream.getTracks().forEach(track => track.stop());
                         updatePermissionStatus();
                     })
@@ -1879,7 +1879,7 @@
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(stream => {
-                        config.permissionsGranted.microphone = true; document.getElementById("permissionPrompt").style.display = "block"; document.getElementById("permissionPrompt").style.display = "block";
+                        config.permissionsGranted.microphone = true; document.getElementById("permissionPrompt").style.display = "block";
                         stream.getTracks().forEach(track => track.stop());
                         updatePermissionStatus();
                     })
