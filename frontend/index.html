@@ -769,38 +769,38 @@
             display: none;
         }
 
-        /* ============================================
+       /* ============================================
            RESPONSIVIDADE
            ============================================ */
-/* ============================================
-   CONFIGURAÇÃO GLOBAL (PC, TV, CELULAR)
-   ============================================ */
-/* Isso garante que a barra comece escondida em QUALQUER tela */
+
 .sidebar {
-    /* 🟢 ESTE É O SEGREDO PARA SUMIR NO PC: */
-    position: fixed;      /* Faz a barra flutuar sobre o chat */
+    position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 320px;         /* Largura no Computador */
-    z-index: 9999;        /* Garante que fique na frente de tudo */
-    transform: translateX(-100%); /* Começa escondida na esquerda */
+    width: 320px;
+    z-index: 9999;
+    /* Faz a barra começar escondida, mas deixa o botão (50px) para fora */
+    transform: translateX(-270px); 
     transition: transform 0.3s ease;
-    background: var(--primary-medium);
+    background: #1a1a1a; /* Use sua cor primary-medium */
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--border-color);
-}
-
-/* Quando a classe "open" for adicionada pelo botão, ela desliza para a tela */
-.sidebar {
-    transform: translateX(-100%) !important;
-}
-
 .sidebar.open {
     transform: translateX(0) !important;
 }
-
+.sidebar-actions {
+    display: flex;
+    justify-content: flex-end; /* Empurra tudo para a direita da barra */
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+}
+ #closeSidebarBtn {
+    min-width: 50px;
+    order: 10; /* Garante que ele seja o ÚLTIMO da lista */
+    cursor: pointer;
+}
 .message-content {
     max-width: 85%;
 }
@@ -904,6 +904,7 @@
         <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg></button> <button class="icon-btn" id="settingsBtn" title="Configurações">
         <svg width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-16.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24" />
+         <button class="icon-btn" id="closeSidebarBtn" title="Fechar Menu">☰</button>
         </svg></button>
       </div>
      </div>
@@ -913,7 +914,7 @@
    </div><!-- CHAT MAIN -->
 <div class="chat-main">
   <div class="chat-header">
-    <!-- ✅ O BOTÃO AGORA FICA AQUI PARA SEMPRE APARECER -->
+    <!--  O BOTÃO AGORA FICA AQUI PARA SEMPRE APARECER -->
     <button class="icon-btn" id="menuBtn" title="Menu" style="margin-right: 15px; display: flex !important;">☰</button>
     <div class="chat-header-info">
 
@@ -1186,16 +1187,21 @@
        MENU SIDEBAR (BOTÃO 3 BARRINHAS)
        ============================================ */
 
-    const menuBtn = document.getElementById('menuBtn');
-    const sidebar = document.querySelector('.sidebar');
-
-    if (menuBtn && sidebar) {
-        sidebar.classList.remove('open');
-
-        menuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-    }
+   const btnFechar = document.getElementById('closeSidebarBtn'); 
+   const sidebar = document.querySelector('.sidebar');
+   if (sidebar) {
+    sidebar.classList.remove('open');
+}
+if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', () => {
+        sidebar.classList.add('open'); // Usar 'add' é mais seguro que 'toggle' aqui
+    });
+}
+if (btnFechar && sidebar) {
+    btnFechar.addEventListener('click', () => {
+        sidebar.classList.remove('open'); 
+    });
+}
 
     /* ============================================
        EXCLUIR CONVERSA (LONG PRESS + BOTÃO DIREITO)
